@@ -18,7 +18,6 @@ use Symfony\AI\Platform\Bridge\Anthropic\Claude;
 use Symfony\AI\Platform\Bridge\Bedrock\BedrockModelClient;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\Response\ResponseInterface as LlmResponse;
 use Symfony\AI\Platform\Response\TextResponse;
 use Symfony\AI\Platform\Response\ToolCall;
 use Symfony\AI\Platform\Response\ToolCallResponse;
@@ -39,7 +38,7 @@ final readonly class ClaudeHandler implements BedrockModelClient
         return $model instanceof Claude;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): LlmResponse
+    public function request(Model $model, array|string $payload, array $options = []): InvokeModelResponse
     {
         unset($payload['model']);
 
@@ -57,12 +56,10 @@ final readonly class ClaudeHandler implements BedrockModelClient
             'body' => json_encode(array_merge($options, $payload), \JSON_THROW_ON_ERROR),
         ];
 
-        $invokeModelResponse = $this->bedrockRuntimeClient->invokeModel(new InvokeModelRequest($request));
-
-        return $this->convert($invokeModelResponse);
+        return $this->bedrockRuntimeClient->invokeModel(new InvokeModelRequest($request));
     }
 
-    public function convert(InvokeModelResponse $bedrockResponse): LlmResponse
+    public function convert(InvokeModelResponse $bedrockResponse): ToolCallResponse|TextResponse
     {
         $data = json_decode($bedrockResponse->getBody(), true, 512, \JSON_THROW_ON_ERROR);
 

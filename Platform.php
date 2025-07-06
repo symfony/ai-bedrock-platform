@@ -18,7 +18,7 @@ use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\PlatformInterface;
-use Symfony\AI\Platform\Response\ResponseInterface;
+use Symfony\AI\Platform\Response\ResponsePromise;
 
 /**
  * @author Björn Altmann
@@ -56,7 +56,7 @@ class Platform implements PlatformInterface
         $this->modelClients = $modelClients instanceof \Traversable ? iterator_to_array($modelClients) : $modelClients;
     }
 
-    public function request(Model $model, array|string|object $input, array $options = []): ResponseInterface
+    public function request(Model $model, array|string|object $input, array $options = []): ResponsePromise
     {
         $payload = $this->contract->createRequestPayload($model, $input);
         $options = array_merge($model->getOptions(), $options);
@@ -72,11 +72,17 @@ class Platform implements PlatformInterface
      * @param array<string, mixed>|string $payload
      * @param array<string, mixed>        $options
      */
-    private function doRequest(Model $model, array|string $payload, array $options = []): ResponseInterface
+    private function doRequest(Model $model, array|string $payload, array $options = []): ResponsePromise
     {
         foreach ($this->modelClients as $modelClient) {
             if ($modelClient->supports($model)) {
-                return $modelClient->request($model, $payload, $options);
+                $response = $modelClient->request($model, $payload, $options);
+
+                return new ResponsePromise(
+                    $modelClient->convert(...),
+                    new RawBedrockResponse($response),
+                    $options,
+                );
             }
         }
 

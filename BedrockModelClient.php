@@ -11,8 +11,9 @@
 
 namespace Symfony\AI\Platform\Bridge\Bedrock;
 
+use AsyncAws\BedrockRuntime\Result\InvokeModelResponse;
 use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\Response\ResponseInterface as LlmResponse;
+use Symfony\AI\Platform\Response\ResponseInterface;
 
 /**
  * @author Björn Altmann
@@ -25,5 +26,7 @@ interface BedrockModelClient
      * @param array<mixed>|string  $payload
      * @param array<string, mixed> $options
      */
-    public function request(Model $model, array|string $payload, array $options = []): LlmResponse;
+    public function request(Model $model, array|string $payload, array $options = []): InvokeModelResponse;
+
+    public function convert(InvokeModelResponse $bedrockResponse): ResponseInterface;
 }
