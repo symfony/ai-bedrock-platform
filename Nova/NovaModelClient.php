@@ -13,18 +13,14 @@ namespace Symfony\AI\Platform\Bridge\Bedrock\Nova;
 
 use AsyncAws\BedrockRuntime\BedrockRuntimeClient;
 use AsyncAws\BedrockRuntime\Input\InvokeModelRequest;
-use AsyncAws\BedrockRuntime\Result\InvokeModelResponse;
-use Symfony\AI\Platform\Bridge\Bedrock\BedrockModelClient;
-use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResponse;
 use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\Response\TextResponse;
-use Symfony\AI\Platform\Response\ToolCall;
-use Symfony\AI\Platform\Response\ToolCallResponse;
+use Symfony\AI\Platform\ModelClientInterface;
 
 /**
  * @author Björn Altmann
  */
-class NovaHandler implements BedrockModelClient
+class NovaModelClient implements ModelClientInterface
 {
     public function __construct(
         private readonly BedrockRuntimeClient $bedrockRuntimeClient,
@@ -36,7 +32,7 @@ class NovaHandler implements BedrockModelClient
         return $model instanceof Nova;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): InvokeModelResponse
+    public function request(Model $model, array|string $payload, array $options = []): RawBedrockResponse
     {
         $modelOptions = [];
         if (isset($options['tools'])) {
@@ -57,32 +53,7 @@ class NovaHandler implements BedrockModelClient
             'body' => json_encode(array_merge($payload, $modelOptions), \JSON_THROW_ON_ERROR),
         ];
 
-        return $this->bedrockRuntimeClient->invokeModel(new InvokeModelRequest($request));
-    }
-
-    public function convert(InvokeModelResponse $bedrockResponse): ToolCallResponse|TextResponse
-    {
-        $data = json_decode($bedrockResponse->getBody(), true, 512, \JSON_THROW_ON_ERROR);
-
-        if (!isset($data['output']) || [] === $data['output']) {
-            throw new RuntimeException('Response does not contain any content');
-        }
-
-        if (!isset($data['output']['message']['content'][0]['text'])) {
-            throw new RuntimeException('Response content does not contain any text');
-        }
-
-        $toolCalls = [];
-        foreach ($data['output']['message']['content'] as $content) {
-            if (isset($content['toolUse'])) {
-                $toolCalls[] = new ToolCall($content['toolUse']['toolUseId'], $content['toolUse']['name'], $content['toolUse']['input']);
-            }
-        }
-        if ([] !== $toolCalls) {
-            return new ToolCallResponse(...$toolCalls);
-        }
-
-        return new TextResponse($data['output']['message']['content'][0]['text']);
+        return new RawBedrockResponse($this->bedrockRuntimeClient->invokeModel(new InvokeModelRequest($request)));
     }
 
     private function getModelId(Model $model): string

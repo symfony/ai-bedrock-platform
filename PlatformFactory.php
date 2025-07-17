@@ -12,11 +12,18 @@
 namespace Symfony\AI\Platform\Bridge\Bedrock;
 
 use AsyncAws\BedrockRuntime\BedrockRuntimeClient;
-use Symfony\AI\Platform\Bridge\Bedrock\Anthropic\ClaudeHandler;
+use Symfony\AI\Platform\Bridge\Anthropic\Contract as AnthropicContract;
+use Symfony\AI\Platform\Bridge\Bedrock\Anthropic\ClaudeModelClient;
+use Symfony\AI\Platform\Bridge\Bedrock\Anthropic\ClaudeResponseConverter;
 use Symfony\AI\Platform\Bridge\Bedrock\Meta\LlamaModelClient;
-use Symfony\AI\Platform\Bridge\Bedrock\Nova\NovaHandler;
+use Symfony\AI\Platform\Bridge\Bedrock\Meta\LlamaResponseConverter;
+use Symfony\AI\Platform\Bridge\Bedrock\Nova\Contract as NovaContract;
+use Symfony\AI\Platform\Bridge\Bedrock\Nova\NovaModelClient;
+use Symfony\AI\Platform\Bridge\Bedrock\Nova\NovaResponseConverter;
+use Symfony\AI\Platform\Bridge\Meta\Contract as LlamaContract;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\Platform;
 
 /**
  * @author Björn Altmann
@@ -31,10 +38,33 @@ final readonly class PlatformFactory
             throw new RuntimeException('For using the Bedrock platform, the async-aws/bedrock-runtime package is required. Try running "composer require async-aws/bedrock-runtime".');
         }
 
-        $modelClient[] = new ClaudeHandler($bedrockRuntimeClient);
-        $modelClient[] = new NovaHandler($bedrockRuntimeClient);
-        $modelClient[] = new LlamaModelClient($bedrockRuntimeClient);
-
-        return new Platform($modelClient, $contract);
+        return new Platform(
+            [
+                new ClaudeModelClient($bedrockRuntimeClient),
+                new LlamaModelClient($bedrockRuntimeClient),
+                new NovaModelClient($bedrockRuntimeClient),
+            ],
+            [
+                new ClaudeResponseConverter(),
+                new LlamaResponseConverter(),
+                new NovaResponseConverter(),
+            ],
+            $contract ?? Contract::create(
+                new AnthropicContract\AssistantMessageNormalizer(),
+                new AnthropicContract\DocumentNormalizer(),
+                new AnthropicContract\DocumentUrlNormalizer(),
+                new AnthropicContract\ImageNormalizer(),
+                new AnthropicContract\ImageUrlNormalizer(),
+                new AnthropicContract\MessageBagNormalizer(),
+                new AnthropicContract\ToolCallMessageNormalizer(),
+                new AnthropicContract\ToolNormalizer(),
+                new LlamaContract\MessageBagNormalizer(),
+                new NovaContract\AssistantMessageNormalizer(),
+                new NovaContract\MessageBagNormalizer(),
+                new NovaContract\ToolCallMessageNormalizer(),
+                new NovaContract\ToolNormalizer(),
+                new NovaContract\UserMessageNormalizer(),
+            )
+        );
     }
 }

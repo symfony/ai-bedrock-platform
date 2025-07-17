@@ -13,17 +13,15 @@ namespace Symfony\AI\Platform\Bridge\Bedrock\Meta;
 
 use AsyncAws\BedrockRuntime\BedrockRuntimeClient;
 use AsyncAws\BedrockRuntime\Input\InvokeModelRequest;
-use AsyncAws\BedrockRuntime\Result\InvokeModelResponse;
-use Symfony\AI\Platform\Bridge\Bedrock\BedrockModelClient;
+use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResponse;
 use Symfony\AI\Platform\Bridge\Meta\Llama;
-use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\Response\TextResponse;
+use Symfony\AI\Platform\ModelClientInterface;
 
 /**
  * @author Björn Altmann
  */
-class LlamaModelClient implements BedrockModelClient
+class LlamaModelClient implements ModelClientInterface
 {
     public function __construct(
         private readonly BedrockRuntimeClient $bedrockRuntimeClient,
@@ -35,24 +33,13 @@ class LlamaModelClient implements BedrockModelClient
         return $model instanceof Llama;
     }
 
-    public function request(Model $model, array|string $payload, array $options = []): InvokeModelResponse
+    public function request(Model $model, array|string $payload, array $options = []): RawBedrockResponse
     {
-        return $this->bedrockRuntimeClient->invokeModel(new InvokeModelRequest([
+        return new RawBedrockResponse($this->bedrockRuntimeClient->invokeModel(new InvokeModelRequest([
             'modelId' => $this->getModelId($model),
             'contentType' => 'application/json',
             'body' => json_encode($payload, \JSON_THROW_ON_ERROR),
-        ]));
-    }
-
-    public function convert(InvokeModelResponse $bedrockResponse): TextResponse
-    {
-        $responseBody = json_decode($bedrockResponse->getBody(), true, 512, \JSON_THROW_ON_ERROR);
-
-        if (!isset($responseBody['generation'])) {
-            throw new RuntimeException('Response does not contain any content');
-        }
-
-        return new TextResponse($responseBody['generation']);
+        ])));
     }
 
     private function getModelId(Model $model): string
