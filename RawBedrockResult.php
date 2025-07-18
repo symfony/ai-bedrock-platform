@@ -12,24 +12,24 @@
 namespace Symfony\AI\Platform\Bridge\Bedrock;
 
 use AsyncAws\BedrockRuntime\Result\InvokeModelResponse;
-use Symfony\AI\Platform\Response\RawResponseInterface;
+use Symfony\AI\Platform\Result\RawResultInterface;
 
 /**
  * @author Christopher Hertel <mail@christopher-hertel.de>
  */
-final readonly class RawBedrockResponse implements RawResponseInterface
+final readonly class RawBedrockResult implements RawResultInterface
 {
     public function __construct(
         private InvokeModelResponse $invokeModelResponse,
     ) {
     }
 
-    public function getRawData(): array
+    public function getData(): array
     {
         return json_decode($this->invokeModelResponse->getBody(), true, 512, \JSON_THROW_ON_ERROR);
     }
 
-    public function getRawObject(): InvokeModelResponse
+    public function getObject(): InvokeModelResponse
     {
         return $this->invokeModelResponse;
     }

@@ -11,32 +11,32 @@
 
 namespace Symfony\AI\Platform\Bridge\Bedrock\Meta;
 
-use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResponse;
+use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResult;
 use Symfony\AI\Platform\Bridge\Meta\Llama;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\Response\RawResponseInterface;
-use Symfony\AI\Platform\Response\TextResponse;
-use Symfony\AI\Platform\ResponseConverterInterface;
+use Symfony\AI\Platform\Result\RawResultInterface;
+use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\ResultConverterInterface;
 
 /**
  * @author Björn Altmann
  */
-class LlamaResponseConverter implements ResponseConverterInterface
+class LlamaResultConverter implements ResultConverterInterface
 {
     public function supports(Model $model): bool
     {
         return $model instanceof Llama;
     }
 
-    public function convert(RawResponseInterface|RawBedrockResponse $response, array $options = []): TextResponse
+    public function convert(RawResultInterface|RawBedrockResult $result, array $options = []): TextResult
     {
-        $data = $response->getRawData();
+        $data = $result->getData();
 
         if (!isset($data['generation'])) {
             throw new RuntimeException('Response does not contain any content');
         }
 
-        return new TextResponse($data['generation']);
+        return new TextResult($data['generation']);
     }
 }

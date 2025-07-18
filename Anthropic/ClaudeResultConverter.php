@@ -12,28 +12,28 @@
 namespace Symfony\AI\Platform\Bridge\Bedrock\Anthropic;
 
 use Symfony\AI\Platform\Bridge\Anthropic\Claude;
-use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResponse;
+use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResult;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\Response\RawResponseInterface;
-use Symfony\AI\Platform\Response\TextResponse;
-use Symfony\AI\Platform\Response\ToolCall;
-use Symfony\AI\Platform\Response\ToolCallResponse;
-use Symfony\AI\Platform\ResponseConverterInterface;
+use Symfony\AI\Platform\Result\RawResultInterface;
+use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\ResultConverterInterface;
 
 /**
  * @author Björn Altmann
  */
-final readonly class ClaudeResponseConverter implements ResponseConverterInterface
+final readonly class ClaudeResultConverter implements ResultConverterInterface
 {
     public function supports(Model $model): bool
     {
         return $model instanceof Claude;
     }
 
-    public function convert(RawResponseInterface|RawBedrockResponse $response, array $options = []): ToolCallResponse|TextResponse
+    public function convert(RawResultInterface|RawBedrockResult $result, array $options = []): ToolCallResult|TextResult
     {
-        $data = $response->getRawData();
+        $data = $result->getData();
 
         if (!isset($data['content']) || [] === $data['content']) {
             throw new RuntimeException('Response does not contain any content');
@@ -50,9 +50,9 @@ final readonly class ClaudeResponseConverter implements ResponseConverterInterfa
             }
         }
         if ([] !== $toolCalls) {
-            return new ToolCallResponse(...$toolCalls);
+            return new ToolCallResult(...$toolCalls);
         }
 
-        return new TextResponse($data['content'][0]['text']);
+        return new TextResult($data['content'][0]['text']);
     }
 }

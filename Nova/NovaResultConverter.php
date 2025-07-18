@@ -11,28 +11,28 @@
 
 namespace Symfony\AI\Platform\Bridge\Bedrock\Nova;
 
-use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResponse;
+use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResult;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\Model;
-use Symfony\AI\Platform\Response\RawResponseInterface;
-use Symfony\AI\Platform\Response\TextResponse;
-use Symfony\AI\Platform\Response\ToolCall;
-use Symfony\AI\Platform\Response\ToolCallResponse;
-use Symfony\AI\Platform\ResponseConverterInterface;
+use Symfony\AI\Platform\Result\RawResultInterface;
+use Symfony\AI\Platform\Result\TextResult;
+use Symfony\AI\Platform\Result\ToolCall;
+use Symfony\AI\Platform\Result\ToolCallResult;
+use Symfony\AI\Platform\ResultConverterInterface;
 
 /**
  * @author Björn Altmann
  */
-class NovaResponseConverter implements ResponseConverterInterface
+class NovaResultConverter implements ResultConverterInterface
 {
     public function supports(Model $model): bool
     {
         return $model instanceof Nova;
     }
 
-    public function convert(RawResponseInterface|RawBedrockResponse $response, array $options = []): ToolCallResponse|TextResponse
+    public function convert(RawResultInterface|RawBedrockResult $result, array $options = []): ToolCallResult|TextResult
     {
-        $data = $response->getRawData();
+        $data = $result->getData();
 
         if (!isset($data['output']) || [] === $data['output']) {
             throw new RuntimeException('Response does not contain any content');
@@ -49,9 +49,9 @@ class NovaResponseConverter implements ResponseConverterInterface
             }
         }
         if ([] !== $toolCalls) {
-            return new ToolCallResponse(...$toolCalls);
+            return new ToolCallResult(...$toolCalls);
         }
 
-        return new TextResponse($data['output']['message']['content'][0]['text']);
+        return new TextResult($data['output']['message']['content'][0]['text']);
     }
 }
