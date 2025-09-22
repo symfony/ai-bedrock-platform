@@ -23,6 +23,7 @@ use Symfony\AI\Platform\Bridge\Bedrock\Nova\NovaResultConverter;
 use Symfony\AI\Platform\Bridge\Meta\Contract as LlamaContract;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Exception\RuntimeException;
+use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
 use Symfony\AI\Platform\Platform;
 
 /**
@@ -32,6 +33,7 @@ final readonly class PlatformFactory
 {
     public static function create(
         BedrockRuntimeClient $bedrockRuntimeClient = new BedrockRuntimeClient(),
+        ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?Contract $contract = null,
     ): Platform {
         if (!class_exists(BedrockRuntimeClient::class)) {
@@ -49,6 +51,7 @@ final readonly class PlatformFactory
                 new LlamaResultConverter(),
                 new NovaResultConverter(),
             ],
+            $modelCatalog,
             $contract ?? Contract::create(
                 new AnthropicContract\AssistantMessageNormalizer(),
                 new AnthropicContract\DocumentNormalizer(),
