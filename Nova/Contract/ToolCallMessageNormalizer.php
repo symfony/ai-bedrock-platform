@@ -45,7 +45,7 @@ final class ToolCallMessageNormalizer extends ModelContractNormalizer implements
             'content' => [
                 [
                     'toolResult' => [
-                        'toolUseId' => $data->toolCall->id,
+                        'toolUseId' => $data->toolCall->getId(),
                         'content' => [['json' => $data->content]],
                     ],
                 ],
