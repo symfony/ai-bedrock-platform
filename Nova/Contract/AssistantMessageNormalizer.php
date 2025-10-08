@@ -50,13 +50,13 @@ final class AssistantMessageNormalizer extends ModelContractNormalizer
                             'input' => [] !== $toolCall->getArguments() ? $toolCall->getArguments() : new \stdClass(),
                         ],
                     ];
-                }, $data->toolCalls),
+                }, $data->getToolCalls()),
             ];
         }
 
         return [
             'role' => 'assistant',
-            'content' => [['text' => $data->content]],
+            'content' => [['text' => $data->getContent()]],
         ];
     }
 

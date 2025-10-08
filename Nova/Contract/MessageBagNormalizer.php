@@ -38,7 +38,7 @@ final class MessageBagNormalizer extends ModelContractNormalizer implements Norm
         $array = [];
 
         if ($data->getSystemMessage()) {
-            $array['system'][]['text'] = $data->getSystemMessage()->content;
+            $array['system'][]['text'] = $data->getSystemMessage()->getContent();
         }
 
         $array['messages'] = $this->normalizer->normalize($data->withoutSystemMessage()->getMessages(), $format, $context);
