@@ -24,20 +24,28 @@ use Symfony\AI\Platform\Bridge\Meta\Contract as LlamaContract;
 use Symfony\AI\Platform\Contract;
 use Symfony\AI\Platform\Exception\RuntimeException;
 use Symfony\AI\Platform\ModelCatalog\ModelCatalogInterface;
+use Symfony\AI\Platform\ModelRouter\CatalogBasedModelRouter;
+use Symfony\AI\Platform\ModelRouterInterface;
 use Symfony\AI\Platform\Platform;
+use Symfony\AI\Platform\Provider;
+use Symfony\AI\Platform\ProviderInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * @author Björn Altmann
  */
-final class PlatformFactory
+final class Factory
 {
-    public static function create(
+    /**
+     * @param non-empty-string $name
+     */
+    public static function createProvider(
         ?BedrockRuntimeClient $bedrockRuntimeClient = null,
         ModelCatalogInterface $modelCatalog = new ModelCatalog(),
         ?Contract $contract = null,
         ?EventDispatcherInterface $eventDispatcher = null,
-    ): Platform {
+        string $name = 'bedrock',
+    ): ProviderInterface {
         if (!class_exists(BedrockRuntimeClient::class)) {
             throw new RuntimeException('For using the Bedrock platform, the async-aws/bedrock-runtime package is required. Try running "composer require async-aws/bedrock-runtime".');
         }
@@ -46,7 +54,8 @@ final class PlatformFactory
             $bedrockRuntimeClient = new BedrockRuntimeClient();
         }
 
-        return new Platform(
+        return new Provider(
+            $name,
             [
                 new ClaudeModelClient($bedrockRuntimeClient),
                 new LlamaModelClient($bedrockRuntimeClient),
@@ -74,6 +83,24 @@ final class PlatformFactory
                 new NovaContract\ToolNormalizer(),
                 new NovaContract\UserMessageNormalizer(),
             ]),
+            $eventDispatcher,
+        );
+    }
+
+    /**
+     * @param non-empty-string $name
+     */
+    public static function createPlatform(
+        ?BedrockRuntimeClient $bedrockRuntimeClient = null,
+        ModelCatalogInterface $modelCatalog = new ModelCatalog(),
+        ?Contract $contract = null,
+        ?EventDispatcherInterface $eventDispatcher = null,
+        string $name = 'bedrock',
+        ?ModelRouterInterface $modelRouter = null,
+    ): Platform {
+        return new Platform(
+            [self::createProvider($bedrockRuntimeClient, $modelCatalog, $contract, $eventDispatcher, $name)],
+            $modelRouter ?? new CatalogBasedModelRouter(),
             $eventDispatcher,
         );
     }
