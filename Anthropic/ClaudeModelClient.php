@@ -76,7 +76,7 @@ final class ClaudeModelClient implements ModelClientInterface
         unset($payload['model']);
 
         if (isset($options['tools'])) {
-            $options['tool_choice'] = ['type' => 'auto'];
+            $options['tool_choice'] ??= ['type' => 'auto'];
         }
 
         if (isset($options['response_format'])) {

@@ -206,6 +206,30 @@ final class ClaudeModelClientTest extends TestCase
         $this->assertInstanceOf(RawBedrockResult::class, $response);
     }
 
+    public function testToolChoiceFromCallerIsPreserved()
+    {
+        $this->bedrockClient->expects($this->once())
+            ->method('invokeModel')
+            ->with($this->callback(function ($arg) {
+                $this->assertInstanceOf(InvokeModelRequest::class, $arg);
+                $body = json_decode($arg->getBody(), true);
+                $this->assertSame(['type' => 'tool', 'name' => 'noop'], $body['tool_choice']);
+
+                return true;
+            }))
+            ->willReturn($this->createMock(InvokeModelResponse::class));
+
+        $this->modelClient = new ClaudeModelClient($this->bedrockClient, self::VERSION);
+
+        $options = [
+            'tools' => ['Tool'],
+            'tool_choice' => ['type' => 'tool', 'name' => 'noop'],
+        ];
+
+        $response = $this->modelClient->request($this->model, ['message' => 'test'], $options);
+        $this->assertInstanceOf(RawBedrockResult::class, $response);
+    }
+
     public function testTransformsResponseFormatToOutputConfig()
     {
         $this->bedrockClient->expects($this->once())
