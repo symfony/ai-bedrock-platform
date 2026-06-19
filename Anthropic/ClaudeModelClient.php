@@ -14,6 +14,7 @@ namespace Symfony\AI\Platform\Bridge\Bedrock\Anthropic;
 use AsyncAws\BedrockRuntime\BedrockRuntimeClient;
 use AsyncAws\BedrockRuntime\Input\InvokeModelRequest;
 use Symfony\AI\Platform\Bridge\Anthropic\Claude;
+use Symfony\AI\Platform\Bridge\Anthropic\JsonSchemaSanitizerTrait;
 use Symfony\AI\Platform\Bridge\Bedrock\RawBedrockResult;
 use Symfony\AI\Platform\Bridge\Bedrock\RegionMapper;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
@@ -25,6 +26,8 @@ use Symfony\AI\Platform\ModelClientInterface;
  */
 final class ClaudeModelClient implements ModelClientInterface
 {
+    use JsonSchemaSanitizerTrait;
+
     /**
      * Bedrock model identifiers differ from Anthropic API names — some require version suffixes,
      * others don't. See https://platform.claude.com/docs/en/about-claude/models/overview for details.
@@ -81,10 +84,11 @@ final class ClaudeModelClient implements ModelClientInterface
         }
 
         if (isset($options['response_format'])) {
+            $schema = $options['response_format']['json_schema']['schema'] ?? [];
             $options['output_config'] = [
                 'format' => [
                     'type' => 'json_schema',
-                    'schema' => $options['response_format']['json_schema']['schema'] ?? [],
+                    'schema' => \is_array($schema) ? $this->normalizeStructuredOutputSchema($schema) : $schema,
                 ],
             ];
             unset($options['response_format']);
