@@ -20,6 +20,7 @@ use Symfony\AI\Platform\Bridge\Bedrock\Nova\Contract\ToolNormalizer;
 use Symfony\AI\Platform\Bridge\Bedrock\Nova\Contract\UserMessageNormalizer;
 use Symfony\AI\Platform\Bridge\Bedrock\Nova\Nova;
 use Symfony\AI\Platform\Contract;
+use Symfony\AI\Platform\Message\Content\Image;
 use Symfony\AI\Platform\Message\Content\Text;
 use Symfony\AI\Platform\Message\Message;
 use Symfony\AI\Platform\Message\MessageBag;
@@ -167,6 +168,34 @@ final class ContractTest extends TestCase
                         ],
                     ],
                     ['role' => 'assistant', 'content' => [['text' => 'It is 10:00 AM.']]],
+                ],
+            ],
+        ];
+
+        yield 'with multimodal tool result' => [
+            new MessageBag(
+                Message::ofToolCall(
+                    new ToolCall('123456', 'screenshot', []),
+                    new Text('Here is the screenshot'),
+                    new Image('binary', 'image/png'),
+                ),
+            ),
+            [
+                'messages' => [
+                    [
+                        'role' => 'user',
+                        'content' => [
+                            [
+                                'toolResult' => [
+                                    'toolUseId' => '123456',
+                                    'content' => [
+                                        ['text' => 'Here is the screenshot'],
+                                        ['image' => ['format' => 'png', 'source' => ['bytes' => base64_encode('binary')]]],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
                 ],
             ],
         ];
