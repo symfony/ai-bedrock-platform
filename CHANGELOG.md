@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+0.14
+----
+
+ * Add support for the Bedrock Mantle Chat Completions, Responses, and Anthropic Messages APIs
+
 0.10
 ----
 
